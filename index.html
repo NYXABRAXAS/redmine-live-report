@@ -87,7 +87,7 @@
     <div class="mb-10">
         <div class="bg-header text-white p-2 font-bold uppercase text-xs tracking-wider flex justify-between items-center rounded-t">
             <span id="detailTitle">Ticket Details (Full List)</span>
-            <input type="text" id="searchBox" onkeyup="searchTable()" placeholder="Search Subject, ID, or Assignee..." class="text-black font-normal p-1 px-3 text-xs rounded-full w-72 outline-none border-none">
+            <input type="text" id="searchBox" oninput="searchTable()" placeholder="Search Subject, ID, or Assignee..." class="text-black font-normal p-1 px-3 text-xs rounded-full w-72 outline-none border-none">
         </div>
         <div class="bg-white shadow table-container rounded-b">
             <table class="w-full border-collapse" id="detailsTable">
@@ -112,6 +112,7 @@
 const API = window.location.origin + "/api/issues";
 let allIssues = [];
 let activeIssues = [];
+let searchTimeout; // For Debouncing
 
 async function loadData() {
     const loader = document.getElementById('loadingStatus');
@@ -273,10 +274,21 @@ function renderTickets(list) {
     document.getElementById("ticketTable").innerHTML = html;
 }
 
+// OPTIMIZED SEARCH WITH DEBOUNCING
 function searchTable() {
-    const term = document.getElementById("searchBox").value.toLowerCase();
-    const rows = document.querySelectorAll("#ticketTable tr");
-    rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(term) ? "" : "none");
+    clearTimeout(searchTimeout);
+    
+    // Wait 300ms after typing stops to run the search
+    searchTimeout = setTimeout(() => {
+        const term = document.getElementById("searchBox").value.toLowerCase();
+        const rows = document.querySelectorAll("#ticketTable tr");
+        
+        rows.forEach(r => {
+            // Using textContent is faster than innerText for large tables
+            const rowText = r.textContent.toLowerCase();
+            r.style.display = rowText.includes(term) ? "" : "none";
+        });
+    }, 300); 
 }
 
 loadData();
